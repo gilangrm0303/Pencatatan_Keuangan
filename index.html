@@ -1,1 +1,385 @@
 
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SakuUMKM - Sistem Pencatatan Keuangan Praktis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .card { @apply bg-white p-6 rounded-xl shadow-sm border border-slate-100; }
+        .btn-primary { @apply bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200; }
+        .input-field { @apply mt-1 block w-full rounded-md border-slate-300 border p-2.5 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm; }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="bg-emerald-600 p-2 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight text-slate-900">Saku<span class="text-emerald-600">UMKM</span></span>
+                </div>
+                <button onclick="exportToCSV()" class="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Ekspor Excel (CSV)
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card border-l-4 border-slate-500">
+                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Modal Saat Ini</p>
+                <h3 id="display-modal-akhir" class="text-2xl font-bold text-slate-900 mt-1">Rp 0</h3>
+                <p class="text-xs text-slate-400 mt-2">Modal Awal + Laba Bersih</p>
+            </div>
+            <div class="card border-l-4 border-emerald-500">
+                <p class="text-sm font-medium text-emerald-600 uppercase tracking-wider">Total Pendapatan</p>
+                <h3 id="display-pendapatan" class="text-2xl font-bold text-slate-900 mt-1 text-emerald-600">Rp 0</h3>
+                <p class="text-xs text-slate-400 mt-2">Total Penjualan Produk/Jasa</p>
+            </div>
+            <div class="card border-l-4 border-rose-500">
+                <p class="text-sm font-medium text-rose-600 uppercase tracking-wider">Total Biaya (HPP + OpEx)</p>
+                <h3 id="display-biaya" class="text-2xl font-bold text-slate-900 mt-1 text-rose-600">Rp 0</h3>
+                <p class="text-xs text-slate-400 mt-2">Seluruh Pengeluaran Usaha</p>
+            </div>
+            <div class="card border-l-4 border-blue-500" id="card-laba">
+                <p class="text-sm font-medium text-blue-600 uppercase tracking-wider">Laba Bersih</p>
+                <h3 id="display-laba-bersih" class="text-2xl font-bold text-slate-900 mt-1">Rp 0</h3>
+                <p class="text-xs text-slate-400 mt-2">Laba Kotor - Biaya Operasional</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Column: Forms -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Form Modal Awal -->
+                <div class="card">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                        </svg>
+                        Update Modal Awal
+                    </h2>
+                    <div class="flex gap-2">
+                        <input type="number" id="input-modal-awal" placeholder="Contoh: 5000000" class="input-field">
+                        <button onclick="saveInitialCapital()" class="btn-primary whitespace-nowrap">Simpan</button>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2 italic">*Hanya masukkan jika ada tambahan modal di luar laba.</p>
+                </div>
+
+                <!-- Form Transaksi -->
+                <div class="card">
+                    <h2 class="text-lg font-bold mb-4">Input Transaksi Baru</h2>
+                    <form id="transaction-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Tanggal</label>
+                            <input type="date" id="tgl" required class="input-field">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Jenis Transaksi</label>
+                            <select id="jenis" required class="input-field">
+                                <option value="income">Pendapatan Jualan</option>
+                                <option value="cogs">HPP (Bahan Baku/Stok)</option>
+                                <option value="opex">Biaya Operasional (Bensin/Listrik/Gaji)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Deskripsi</label>
+                            <input type="text" id="deskripsi" placeholder="Contoh: Jual 10 Box Kopi" required class="input-field">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Nominal (Rp)</label>
+                            <input type="number" id="nominal" placeholder="0" required class="input-field">
+                        </div>
+                        <button type="submit" class="w-full btn-primary mt-2">Catat Transaksi</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Column: Visualisasi -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="card h-full flex flex-col">
+                    <h2 class="text-lg font-bold mb-6">Analisis Keuangan UMKM</h2>
+                    <div class="flex-grow flex items-center justify-center">
+                        <canvas id="financeChart" height="250"></canvas>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mt-6 border-t pt-4">
+                        <div class="text-center border-r">
+                            <p class="text-xs text-slate-500 uppercase">Laba Kotor</p>
+                            <p id="display-laba-kotor" class="text-lg font-bold text-slate-800">Rp 0</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-xs text-slate-500 uppercase">Margin Laba</p>
+                            <p id="display-margin" class="text-lg font-bold text-slate-800">0%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="card mt-8 overflow-hidden">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <h2 class="text-lg font-bold">Riwayat Transaksi</h2>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-slate-500">Filter:</label>
+                    <select id="filter-jenis" onchange="renderApp()" class="rounded-md border-slate-300 text-sm p-1.5 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="all">Semua</option>
+                        <option value="income">Pendapatan</option>
+                        <option value="cogs">HPP</option>
+                        <option value="opex">Operasional</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Tanggal</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Keterangan</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Kategori</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Nominal</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-history" class="bg-white divide-y divide-slate-200">
+                        <!-- Data rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="empty-state" class="hidden py-12 text-center text-slate-400">
+                Belum ada transaksi tercatat.
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- State Management ---
+        let transactions = JSON.parse(localStorage.getItem('umkm_transactions')) || [];
+        let initialCapital = parseFloat(localStorage.getItem('umkm_capital')) || 0;
+        let myChart = null;
+
+        // --- Logic Akuntansi ---
+        function calculateFinance() {
+            const totals = transactions.reduce((acc, curr) => {
+                if (curr.jenis === 'income') acc.revenue += curr.nominal;
+                if (curr.jenis === 'cogs') acc.hpp += curr.nominal;
+                if (curr.jenis === 'opex') acc.opex += curr.nominal;
+                return acc;
+            }, { revenue: 0, hpp: 0, opex: 0 });
+
+            const labaKotor = totals.revenue - totals.hpp;
+            const labaBersih = labaKotor - totals.opex;
+            const modalAkhir = initialCapital + labaBersih;
+            const marginLaba = totals.revenue > 0 ? (labaBersih / totals.revenue) * 100 : 0;
+
+            return { ...totals, labaKotor, labaBersih, modalAkhir, marginLaba };
+        }
+
+        // --- UI Rendering ---
+        function formatIDR(number) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(number);
+        }
+
+        function renderApp() {
+            const data = calculateFinance();
+            const filterValue = document.getElementById('filter-jenis').value;
+
+            // Update Summary Cards
+            document.getElementById('display-modal-akhir').innerText = formatIDR(data.modalAkhir);
+            document.getElementById('display-pendapatan').innerText = formatIDR(data.revenue);
+            document.getElementById('display-biaya').innerText = formatIDR(data.hpp + data.opex);
+            document.getElementById('display-laba-bersih').innerText = formatIDR(data.labaBersih);
+            document.getElementById('display-laba-kotor').innerText = formatIDR(data.labaKotor);
+            document.getElementById('display-margin').innerText = data.marginLaba.toFixed(1) + '%';
+
+            // Styling Laba Bersih (Emerald if positive, Rose if negative)
+            const labaText = document.getElementById('display-laba-bersih');
+            if(data.labaBersih >= 0) {
+                labaText.classList.replace('text-rose-600', 'text-emerald-600');
+                labaText.classList.add('text-emerald-600');
+            } else {
+                labaText.classList.remove('text-emerald-600');
+                labaText.classList.add('text-rose-600');
+            }
+
+            // Update Table
+            const historyBody = document.getElementById('transaction-history');
+            const emptyState = document.getElementById('empty-state');
+            historyBody.innerHTML = '';
+
+            const filteredData = filterValue === 'all' 
+                ? transactions 
+                : transactions.filter(t => t.jenis === filterValue);
+
+            if (filteredData.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                // Sort by date descending
+                [...filteredData].sort((a,b) => new Date(b.tgl) - new Date(a.tgl)).forEach((t, index) => {
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-slate-50 transition-colors";
+                    
+                    const labelMap = {
+                        'income': { text: 'Pendapatan', class: 'bg-emerald-100 text-emerald-700' },
+                        'cogs': { text: 'HPP', class: 'bg-orange-100 text-orange-700' },
+                        'opex': { text: 'Operasional', class: 'bg-rose-100 text-rose-700' }
+                    };
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">${new Date(t.tgl).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'})}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-slate-900">${t.deskripsi}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${labelMap[t.jenis].class}">${labelMap[t.jenis].text}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold ${t.jenis === 'income' ? 'text-emerald-600' : 'text-slate-700'}">
+                            ${t.jenis === 'income' ? '+' : '-'} ${formatIDR(t.nominal).replace('Rp', '')}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <button onclick="deleteTransaction(${t.id})" class="text-rose-400 hover:text-rose-600 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </td>
+                    `;
+                    historyBody.appendChild(row);
+                });
+            }
+
+            updateChart(data);
+        }
+
+        // --- Chart Logic ---
+        function updateChart(data) {
+            const ctx = document.getElementById('financeChart').getContext('2d');
+            
+            if (myChart) myChart.destroy();
+
+            // Hanya tampilkan data jika ada angka yang tidak nol
+            const hasData = (data.revenue > 0 || data.hpp > 0 || data.opex > 0);
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Pendapatan', 'HPP', 'Operasional', 'Laba Bersih'],
+                    datasets: [{
+                        label: 'Rupiah',
+                        data: [data.revenue, data.hpp, data.opex, data.labaBersih],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)', // Emerald
+                            'rgba(244, 63, 94, 0.8)',  // Rose (HPP)
+                            'rgba(225, 29, 72, 0.8)',  // Deep Rose (OpEx)
+                            'rgba(59, 130, 246, 0.8)'  // Blue
+                        ],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (value) => 'Rp ' + value.toLocaleString('id-ID')
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Actions ---
+        document.getElementById('transaction-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const newTransaction = {
+                id: Date.now(),
+                tgl: document.getElementById('tgl').value,
+                jenis: document.getElementById('jenis').value,
+                deskripsi: document.getElementById('deskripsi').value,
+                nominal: parseFloat(document.getElementById('nominal').value)
+            };
+
+            transactions.push(newTransaction);
+            localStorage.setItem('umkm_transactions', JSON.stringify(transactions));
+            
+            e.target.reset();
+            // Set default date back to today
+            document.getElementById('tgl').valueAsDate = new Date();
+            renderApp();
+        });
+
+        function saveInitialCapital() {
+            const val = parseFloat(document.getElementById('input-modal-awal').value);
+            if (isNaN(val)) return alert("Masukkan angka nominal modal.");
+            
+            initialCapital = val;
+            localStorage.setItem('umkm_capital', initialCapital);
+            document.getElementById('input-modal-awal').value = '';
+            renderApp();
+            alert("Modal awal berhasil diperbarui!");
+        }
+
+        function deleteTransaction(id) {
+            if(confirm('Hapus transaksi ini?')) {
+                transactions = transactions.filter(t => t.id !== id);
+                localStorage.setItem('umkm_transactions', JSON.stringify(transactions));
+                renderApp();
+            }
+        }
+
+        function exportToCSV() {
+            if (transactions.length === 0) return alert("Tidak ada data untuk diekspor.");
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Tanggal,Deskripsi,Jenis,Nominal\n";
+
+            transactions.forEach(t => {
+                csvContent += `${t.tgl},${t.deskripsi},${t.jenis},${t.nominal}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Laporan_Keuangan_UMKM_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- Initial Load ---
+        window.onload = () => {
+            document.getElementById('tgl').valueAsDate = new Date();
+            renderApp();
+        };
+    </script>
+</body>
+</html>
